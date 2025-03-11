@@ -1,19 +1,18 @@
-import React from 'react';
-import { Layer, Layer1D, Layer2D, Convert1DTo2D, Convert2DTo1D,
-         InputLayer, FlattenLayer } from '@/models/Layer';
+import { Layer, Layer1D, Layer2D, Convert2DTo1D,
+         FlattenLayer } from '@/models/Layer';
 import { Paper, Typography, Box, Button } from '@mui/material';
 import * as Blockly from 'blockly';
 
 // Type guards for layer interfaces
-function isLayer2D(layer: Layer): layer is Layer & Layer2D {
+export function isLayer2D(layer: Layer): layer is Layer & Layer2D {
   return 'width' in layer && 'height' in layer;
 }
 
-function isLayer1D(layer: Layer): layer is Layer & Layer1D {
+export function isLayer1D(layer: Layer): layer is Layer & Layer1D {
   return 'dimension' in layer;
 }
 
-function isConvert2DTo1D(layer: Layer): layer is Layer & Convert2DTo1D {
+export function isConvert2DTo1D(layer: Layer): layer is Layer & Convert2DTo1D {
   return layer instanceof FlattenLayer;
 }
 
@@ -40,7 +39,7 @@ export default function NetworkInfoPanel({
       }}
     >
       <Typography variant="h6" gutterBottom>
-        Network Information
+        网络信息
       </Typography>
       
       {networkLayers.length > 0 ? (
@@ -78,12 +77,12 @@ export default function NetworkInfoPanel({
             onClick={onDownloadArchitecture}
             sx={{ mt: 2 }}
           >
-            Download Architecture
+            下载网络结构
           </Button>
 
           {validationErrors.length > 0 && (
             <Box sx={{ mt: 2 }}>
-              <Typography variant="h6" color="error">Validation Errors</Typography>
+              <Typography variant="h6" color="error">校验错误</Typography>
               {validationErrors.map((error, index) => (
                 <Typography key={index} variant="body2" color="error">
                   • {error}
@@ -94,25 +93,26 @@ export default function NetworkInfoPanel({
         </>
       ) : (
         <Typography variant="body1">
-          No network created yet. Start by dragging an Input Layer from the toolbox.
+          添加神经网络层以查看网络信息
         </Typography>
       )}
       
       {selectedBlock && (
         <Box sx={{ mt: 4, p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
           <Typography variant="h6" gutterBottom>
-            Selected Block Properties
+            当前层
           </Typography>
           <Typography variant="body2">
-            Type: {selectedBlock.type.replace('_layer', '').toUpperCase()}
+            类型 {selectedBlock.type.replace('_layer', '').toUpperCase()}
           </Typography>
           <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-            Data Format: 
-            {selectedBlock.type === 'flatten_layer' ? ' Converts 2D → 1D' :
+            维度
+            {selectedBlock.type === 'flatten_layer' ? ' 转换 2D → 1D' :
              (selectedBlock.type === 'input_layer' || 
               selectedBlock.type === 'conv2d_layer' || 
               selectedBlock.type === 'pooling_layer') ? ' 2D' : ' 1D'}
           </Typography>
+          
         </Box>
       )}
     </Paper>

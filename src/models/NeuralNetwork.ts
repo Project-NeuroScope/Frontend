@@ -1,8 +1,5 @@
 // This file contains the NeuralNetwork class
-
-import { Layer } from './Layer';
-
-export type SerializedNetwork = {
+export type ModelDefinition = {
     metadata: {
         name: string;
         version: string;
@@ -36,17 +33,3 @@ export type SerializedNetwork = {
         params: Record<string, unknown>;
     }>;
 };
-
-
-export default class NeuralNetwork {
-    layers: Layer[];
-    
-
-    constructor() {
-        this.layers = [];
-    }
-
-    toJSON() {
-
-    }
-}

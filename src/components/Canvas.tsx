@@ -1,28 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as Blockly from 'blockly';
-import { Layer, Layer1D, Layer2D, Convert1DTo2D, Convert2DTo1D,
-         InputLayer, Conv2dLayer, PoolingLayer, FlattenLayer, 
+import { Layer, InputLayer, Conv2dLayer, PoolingLayer, FlattenLayer, 
          DenseLayer, DropoutLayer, OutputLayer } from '@/models/Layer';
-import { Button, Paper, TextField, FormControl, InputLabel, 
-         Select, MenuItem, Typography, Box, Grid } from '@mui/material';
+import { Grid } from '@mui/material';
 import Header from './Header';
-
-// Type guards for layer interfaces (keep these for the model conversion logic)
-function isLayer2D(layer: Layer): layer is Layer & Layer2D {
-  return 'width' in layer && 'height' in layer;
-}
-
-function isLayer1D(layer: Layer): layer is Layer & Layer1D {
-  return 'dimension' in layer;
-}
-
-function isConvert2DTo1D(layer: Layer): layer is Layer & Convert2DTo1D {
-  return layer instanceof FlattenLayer;
-}
-
-function isConvert1DTo2D(layer: Layer): layer is Layer & Convert1DTo2D {
-  return false; // Currently no layers implement this interface
-}
+import NetworkInfoPanel, {isConvert2DTo1D, isLayer1D, isLayer2D} from './NetworkInfoPanel';
 
 export default function Canvas() {
   const blocklyDivRef = useRef<HTMLDivElement>(null);
@@ -67,8 +49,8 @@ export default function Canvas() {
     // Add change listener to detect block selection and connections
     workspace.addChangeListener((event) => {
       if (event.type === Blockly.Events.SELECTED) {
-        const eventCast = event as Blockly.Events.BlockBase;
-        const blockId = eventCast.blockId && workspace.getBlockById(eventCast.blockId);
+        const eventCast = event as Blockly.Events.Selected;
+        const blockId = eventCast.newElementId && workspace.getBlockById(eventCast.newElementId);
         setSelectedBlock(blockId || null);
         updateNetworkFromBlocks(workspace);
       } else if (event.type === Blockly.Events.BLOCK_CHANGE || 
@@ -261,11 +243,11 @@ export default function Canvas() {
     // Find input layers (these are the starting points of our networks)
     const blocks = workspace.getTopBlocks(false);
     const inputBlocks = blocks.filter(block => block.type === 'input_layer');
-    
+    console.log(inputBlocks.length);
+
     if (inputBlocks.length === 0) {
       setNetworkLayers([]);
-      setValidationErrors(["No input layer found. Start your network with an input layer."]);
-      return;
+      setValidationErrors(["你的网络没有输入层"]);
     }
     
     const errors: string[] = [];
@@ -448,6 +430,7 @@ export default function Canvas() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Header/>
+      
       <Grid container sx={{ flexGrow: 1 }}>
         {/* Main Blockly workspace */}
         <Grid item xs={8}>
@@ -460,82 +443,14 @@ export default function Canvas() {
           />
         </Grid>
         
-        {/* Properties panel with layer type indicators */}
+        {/* Properties panel extracted to NetworkInfoPanel component */}
         <Grid item xs={4}>
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              height: 'calc(100vh - 100px)', 
-              overflow: 'auto',
-              p: 2
-            }}
-          >
-            <Typography variant="h6" gutterBottom>
-              Network Information
-            </Typography>
-            
-            {networkLayers.length > 0 ? (
-              <>
-                <Typography variant="subtitle1" gutterBottom>
-                  Layers: {networkLayers.length}
-                </Typography>
-                
-                <Box sx={{ mt: 2 }}>
-                  {networkLayers.map((layer, index) => (
-                    <Paper 
-                      key={layer.id}
-                      elevation={1} 
-                      sx={{ 
-                        p: 1, 
-                        mb: 1, 
-                        bgcolor: isLayer2D(layer) ? '#e3f2fd' : 
-                                 isLayer1D(layer) ? '#f3e5f5' : 
-                                 isConvert2DTo1D(layer) ? '#e8f5e9' : '#fff8e1'
-                      }}
-                    >
-                      <Typography variant="body2">
-                        {index + 1}. {layer.data.label} 
-                        {isLayer2D(layer) && ' (2D)'}
-                        {isLayer1D(layer) && ' (1D)'}
-                        {isConvert2DTo1D(layer) && ' (2D→1D)'}
-                      </Typography>
-                    </Paper>
-                  ))}
-                </Box>
-                
-                <Button 
-                  variant="contained" 
-                  color="primary"
-                  onClick={downloadNetworkArchitecture}
-                  sx={{ mt: 2 }}
-                >
-                  Download Architecture
-                </Button>
-              </>
-            ) : (
-              <Typography variant="body1">
-                No network created yet. Start by dragging an Input Layer from the toolbox.
-              </Typography>
-            )}
-            
-            {selectedBlock && (
-              <Box sx={{ mt: 4, p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
-                <Typography variant="h6" gutterBottom>
-                  Selected Block Properties
-                </Typography>
-                <Typography variant="body2">
-                  Type: {selectedBlock.type.replace('_layer', '').toUpperCase()}
-                </Typography>
-                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                  Data Format: 
-                  {selectedBlock.type === 'flatten_layer' ? ' Converts 2D → 1D' :
-                   (selectedBlock.type === 'input_layer' || 
-                    selectedBlock.type === 'conv2d_layer' || 
-                    selectedBlock.type === 'pooling_layer') ? ' 2D' : ' 1D'}
-                </Typography>
-              </Box>
-            )}
-          </Paper>
+          <NetworkInfoPanel 
+            networkLayers={networkLayers}
+            selectedBlock={selectedBlock}
+            validationErrors={validationErrors}
+            onDownloadArchitecture={downloadNetworkArchitecture}
+          />
         </Grid>
       </Grid>
     </div>

@@ -38,6 +38,8 @@ export class InputLayer extends Layer implements Layer2D {
     batchSize: number; // number of images processed simultaneously
     format: 'RGB' | 'GRAYSCALE';  // color format of the image
 
+    static description = '输入层';
+
     constructor(id: string, position: { x: number, y: number }, label: string, width: number, height: number, channels: number, batchSize: number, format: 'RGB' | 'GRAYSCALE') {
         super(id, position, label);
         this.width = width;
